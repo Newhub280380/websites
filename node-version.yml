@@ -1,0 +1,2 @@
+# Node.js version used by CI (see .github/workflows/ci.yml) and recommended for local dev.
+node-version: 24
