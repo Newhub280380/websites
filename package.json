@@ -13,6 +13,8 @@
     "sr:dev": "vuepress dev storage_redirect",
     "sr:build": "vuepress build storage_redirect",
     "www:dev": "vuepress dev www",
-    "www:build": "vuepress build www"
+    "www:build": "vuepress build www",
+    "build:all": "npm run www:build && npm run appops:build && npm run shizuku:build && npm run sr:build",
+    "test": "node scripts/check-build.js www/.vuepress/dist && node scripts/check-build.js appops/.vuepress/dist && node scripts/check-build.js shizuku/.vuepress/dist && node scripts/check-build.js storage_redirect/.vuepress/dist"
   }
 }

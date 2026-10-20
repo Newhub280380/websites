@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.site }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - site: www
+            script: www:build
+            dist: www/.vuepress/dist
+          - site: appops
+            script: appops:build
+            dist: appops/.vuepress/dist
+          - site: shizuku
+            script: shizuku:build
+            dist: shizuku/.vuepress/dist
+          - site: storage_redirect
+            script: sr:build
+            dist: storage_redirect/.vuepress/dist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # setup-node reads its version file as raw text, so the version declared in
+      # node-version.yml is resolved into a step output first.
+      - name: Resolve Node version
+        id: nodever
+        run: echo "version=$(node scripts/read-node-version.js)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ steps.nodever.outputs.version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build ${{ matrix.site }}
+        run: npm run ${{ matrix.script }}
+
+      - name: Check build output
+        run: node scripts/check-build.js "${{ matrix.dist }}"
+
+      - name: Upload ${{ matrix.site }} dist
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-${{ matrix.site }}
+          path: ${{ matrix.dist }}
+          if-no-files-found: error
+          retention-days: 7
